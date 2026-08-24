@@ -1,103 +1,136 @@
-import { useState, useRef, useEffect } from 'react';
-import { TRACKS } from './data/tracks';
-import PlayerCard from './components/PlayerCard';
-import ProgressBar from './components/ProgressBar';
-import Controls from './components/Controls';
-import Playlist from './components/Playlist';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
-export default function App() {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+import ProtectedRoute from "./components/ProtectedRoute";
 
-  const audioRef = useRef(null);
-  const currentTrack = TRACKS[currentTrackIndex];
+import Register from "./pages/Register/Register";
+import Login from "./pages/Login/Login";
 
-  useEffect(() => {
-    if (audioRef.current && isPlaying) {
-      audioRef.current.play().catch(() => setIsPlaying(false));
-    }
-  }, [currentTrackIndex]);
+import Home from "./pages/Home/Home";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Favorites from "./pages/Favorites/Favorites";
+import Downloads from "./pages/Downloads/Downloads";
 
-  const togglePlayPause = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
-    }
-    setIsPlaying(!isPlaying);
-  };
+import Header from "./components/Header";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import MusicPlayer from "./components/MusicPlayer";
+import ToastContainer from "./components/ToastContainer";
 
-  const handleNext = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % TRACKS.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentTrackIndex((prev) => (prev - 1 + TRACKS.length) % TRACKS.length);
-  };
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
-    }
-  };
-
-  const handleSeek = (e) => {
-    const seekTime = Number(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = seekTime;
-      setCurrentTime(seekTime);
-    }
-  };
-
-  const handleVolumeChange = (e) => {
-    const newVolume = Number(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-  };
-
-  const handleSelectTrack = (index) => {
-    setCurrentTrackIndex(index);
-    setIsPlaying(true);
-  };
-
+const MusicLayout = () => {
   return (
-    <div className="player-container">
-      <audio
-        ref={audioRef}
-        src={currentTrack.src}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleNext}
-      />
+    <div className="app">
 
-      <PlayerCard track={currentTrack} />
+      {/* HEADER */}
+      <Header />
 
-      <ProgressBar
-        currentTime={currentTime}
-        duration={duration}
-        onSeek={handleSeek}
-      />
+      {/* NAVBAR */}
+      <Navbar />
 
-      <Controls
-        isPlaying={isPlaying}
-        onTogglePlay={togglePlayPause}
-        onNext={handleNext}
-        onPrev={handlePrev}
-        volume={volume}
-        onVolumeChange={handleVolumeChange}
-      />
+      <div className="main-layout">
 
-      <Playlist
-        tracks={TRACKS}
-        currentIndex={currentTrackIndex}
-        onSelectTrack={handleSelectTrack}
-      />
+        {/* SIDEBAR */}
+        <Sidebar />
+
+        {/* PAGE CONTENT */}
+        <main className="content">
+
+          <Routes>
+
+            <Route
+              path="/home"
+              element={<Home />}
+            />
+
+            <Route
+              path="/dashboard"
+              element={<Dashboard />}
+            />
+
+            <Route
+              path="/favorites"
+              element={<Favorites />}
+            />
+
+            <Route
+              path="/downloads"
+              element={<Downloads />}
+            />
+
+          </Routes>
+
+        </main>
+
+      </div>
+
+      {/* MUSIC PLAYER */}
+      <MusicPlayer />
+
     </div>
   );
-}
+};
+
+const App = () => {
+  return (
+    <BrowserRouter>
+
+      <ToastContainer />
+
+      <Routes>
+
+        {/* =================================
+            DEFAULT PAGE
+        ================================= */}
+
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to="/register"
+              replace
+            />
+          }
+        />
+
+        {/* =================================
+            REGISTER
+        ================================= */}
+
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        {/* =================================
+            LOGIN
+        ================================= */}
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+        {/* =================================
+            PROTECTED MUSIC APPLICATION
+        ================================= */}
+
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <MusicLayout />
+            </ProtectedRoute>
+          }
+        />
+
+      </Routes>
+
+    </BrowserRouter>
+  );
+};
+
+export default App;
